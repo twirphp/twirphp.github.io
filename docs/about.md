@@ -29,5 +29,6 @@ While in the modern software world Go becomes more and more popular every day,
 PHP (as of the time of this writing) is still in the [top 10 popular programming languages](https://www.tiobe.com/tiobe-index/).
 
 TwirPHP is a PHP port of Twirp supporting both server and client side.
-It generates code the same way as Twirp and follows the same naming conventions and architectural structure,
+It generates code the same way as Twirp and follows the same naming conventions and architectural structure
+both in the generated code and the runtime library,
 making it easier to use Twirp (and TwirPHP) in a polyglot environment.
