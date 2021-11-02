@@ -17,7 +17,7 @@ The code generator is responsible for generating:
 
 - some common code used in both servers and clients
 - the server protocol implementation
-- the server interface
+- the service interface
 - the client stubs
 
 It's written in Go to make the implementation simpler by using some standard Go protobuf tooling,
