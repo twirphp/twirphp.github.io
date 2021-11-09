@@ -9,7 +9,7 @@ This guide walks you through the process of quickly setting up a new project wit
 The end result and the code samples are available in [this repository](https://github.com/twirphp/quickstart-demo).
 
 :::caution
-This guide is merely to demonstrate the very basic features of TwirPHP. 
+This guide is merely to demonstrate the very basic features of TwirPHP.
 
 **Please read the rest of the documentation for details about running TwirPHP in production.**
 :::
@@ -75,7 +75,6 @@ They are explained in more detail in the rest of the documentation.
 syntax = "proto3";
 
 package twitch.twirp.example;
-option go_package = "example";
 
 // A Hat is a piece of headwear made by a Haberdasher.
 message Hat {
