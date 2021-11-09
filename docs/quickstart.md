@@ -6,12 +6,12 @@ sidebar_position: 20
 
 This guide walks you through the process of quickly setting up a new project with TwirPHP.
 
-If you want to see the result without following this guide, check out [this repository](https://github.com/twirphp/quickstart-demo).
+The end result and the code samples are available in [this repository](https://github.com/twirphp/quickstart-demo).
 
 :::caution
-This is merely an overview, it's not meant for setting up new production services.
+This guide is merely to demonstrate the very basic features of TwirPHP. 
 
-**Please read the rest of the documentation.**
+**Please read the rest of the documentation for details about running TwirPHP in production.**
 :::
 
 ## Prerequisites
@@ -38,7 +38,7 @@ cd twirphp-quickstart
 Initialize Composer:
 
 ```shell
-composer init --name twirp/quickstart-demo --stability dev --autoload src/ --no-interaction
+composer init --name twirp/example --stability dev --autoload src/ --no-interaction
 ```
 
 ## Install the protoc plugin (code generator)
@@ -71,23 +71,35 @@ They are explained in more detail in the rest of the documentation.
 
 ## Create a new service definition
 
-Create a new service in the repository root:
-
 ```protobuf title="service.proto"
 syntax = "proto3";
 
-package twirp.quickstartDemo;
+package twitch.twirp.example;
+option go_package = "example";
 
-service HelloWorld {
-  rpc Hello(HelloReq) returns (HelloResp);
+// A Hat is a piece of headwear made by a Haberdasher.
+message Hat {
+  // The size of a hat should always be in inches.
+  int32 size = 1;
+
+  // The color of a hat will never be 'invisible', but other than
+  // that, anything is fair game.
+  string color = 2;
+
+  // The name of a hat is it's type. Like, 'bowler', or something.
+  string name = 3;
 }
 
-message HelloReq {
-  string subject = 1;
+// Size is passed when requesting a new hat to be made. It's always
+// measured in inches.
+message Size {
+  int32 inches = 1;
 }
 
-message HelloResp {
-  string text = 1;
+// A Haberdasher makes hats for clients.
+service Haberdasher {
+  // MakeHat produces a hat of mysterious, randomly-selected color!
+  rpc MakeHat(Size) returns (Hat);
 }
 ```
 
@@ -126,10 +138,10 @@ Add autoloading configuration for the generated code to `composer.json`:
 
 ```json {6} title="composer.json"
 {
-    "name": "twirp/quickstart-demo",
+    "name": "twirp/example",
     "autoload": {
         "psr-4": {
-            "Twirp\\QuickstartDemo\\": "src/",
+            "Twirp\\Example\\": "src/",
             "": "generated/"
         }
     },
@@ -147,58 +159,68 @@ Dump the Composer autoloader after making the above change:
 composer dump-autoload
 ```
 
-## Implement the service
-
-Implement the `HelloWorld` service:
-
-```php title="src/MyHelloWorld.php"
-<?php
-
-namespace Twirp\QuickstartDemo;
-
-final class MyHelloWorld implements HelloWorld
-{
-    public function Hello(array $ctx, HelloReq $req): HelloResp
-    {
-        $resp = new HelloResp();
-        $resp->setText(sprintf("Hello %s", $req->getSubject()));
-
-        return $resp;
-    }
-}
-
-```
-
 ## Implement the server
 
-Implement the server and register the `MyHelloWorld` implementation of the `HelloWorld` service in it:
+The next step is writing some code that fulfills the generated service interface.
+This will be the business logic answering to requests.
 
-```php {9-10} title="server.php"
+```php title="src/Haberdasher.php"
 <?php
 
-require __DIR__.'/vendor/autoload.php';
+namespace Twirp\Example;
+
+use Twitch\Twirp\Example\Hat;
+use Twitch\Twirp\Example\Size;
+
+final class Haberdasher implements \Twitch\Twirp\Example\Haberdasher
+{
+    public function MakeHat(array $ctx, Size $size): Hat
+    {
+        $hat = new Hat();
+        $hat->setSize($size->getInches());
+        $hat->setColor('golden');
+        $hat->setName('crown');
+
+        return $hat;
+    }
+}
+```
+
+## Run the server
+
+To serve requests over HTTP, we need to turn the service implementation into a `Psr\Http\Server\RequestHandlerInterface`:
+
+```php {7} title="server.php"
+<?php
+
+require __DIR__ . '/vendor/autoload.php';
 
 $request = \GuzzleHttp\Psr7\ServerRequest::fromGlobals();
 
-$server = new \Twirp\Server();
+$handler = new \Twitch\Twirp\Example\HaberdasherServer(new \Twirp\Example\Haberdasher());
 
-$handler = new \Twirp\QuickstartDemo\HelloWorldServer(new \Twirp\QuickstartDemo\MyHelloWorld());
-$server->registerServer(\Twirp\QuickstartDemo\HelloWorldServer::PATH_PREFIX, $handler);
-
-$response = $server->handle($request);
+$response = $handler->handle($request);
 
 if (!headers_sent()) {
-	// status
-	header(sprintf('HTTP/%s %s %s', $response->getProtocolVersion(), $response->getStatusCode(), $response->getReasonPhrase()), true, $response->getStatusCode());
-	// headers
-	foreach ($response->getHeaders() as $header => $values) {
-		foreach ($values as $value) {
-			header($header.': '.$value, false, $response->getStatusCode());
-		}
-	}
+    // status
+    header(sprintf('HTTP/%s %s %s', $response->getProtocolVersion(), $response->getStatusCode(), $response->getReasonPhrase()), true, $response->getStatusCode());
+
+    // headers
+    foreach ($response->getHeaders() as $header => $values) {
+        foreach ($values as $value) {
+            header($header . ': ' . $value, false, $response->getStatusCode());
+        }
+    }
 }
+
 echo $response->getBody();
 ```
+
+:::note
+In this example there is only one service.
+If you need to mount more than one service in the same application, take a look at the `Twirp\Router` class.
+TODO: write a documentation page about it.
+:::
 
 ## Test the server
 
@@ -213,35 +235,37 @@ php -S 127.0.0.1:8080 server.php
 Then send an HTTP request to the server using cURL:
 
 ```shell
-curl http://127.0.0.1:8080/twirp/twirp.quickstartDemo.HelloWorld/Hello \
+curl http://127.0.0.1:8080/twirp/twitch.twirp.example.Haberdasher/MakeHat \
   -X POST \
   -H "Content-Type: application/json" \
-  -d '{"subject": "World"}'
+  -d '{"inches": 123}'
 ```
 
-You should see `{"text":"Hello World"}` as the response.
+```shell
+{"size":123,"color":"golden","name":"crown"}
+```
 
 ## Use the generated client stubs
 
 One of the biggest benefits of using a protobuf-based RPC framework is that you don't have to write any client code:
 the framework generates that for you.
 
-Here is an example of using the generated client for calling the `HelloWorld` service:
+Here is an example of using the generated client:
 
 ```php title="client.php"
 <?php
 
-require __DIR__.'/vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
 
-$client = new \Twirp\QuickstartDemo\HelloWorldClient($argv[1]);
+$client = new \Twitch\Twirp\Example\HaberdasherClient($argv[1]);
 
-$req = new \Twirp\QuickstartDemo\HelloReq();
-$req->setSubject("World");
+$size = new \Twitch\Twirp\Example\Size();
+$size->setInches(1234);
 
 try {
-    $resp = $client->Hello([], $req);
+    $hat = $client->MakeHat([], $size);
 
-    echo $resp->getText();
+    echo $hat->serializeToJsonString();
 } catch (\Twirp\Error $e) {
     echo json_encode([
         'code' => $e->getErrorCode(),
