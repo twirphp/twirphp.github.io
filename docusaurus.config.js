@@ -16,10 +16,14 @@ const config = {
   organizationName: 'twirphp',
   projectName: 'twirphp.github.io',
   trailingSlash: false,
+  i18n: {
+    defaultLocale: 'en',
+    locales: ['en'],
+  },
 
   presets: [
     [
-      '@docusaurus/preset-classic',
+      'classic',
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
         docs: {
