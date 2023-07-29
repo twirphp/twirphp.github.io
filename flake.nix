@@ -2,18 +2,40 @@
   description = "TwirPHP website";
 
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
-    flake-compat = {
-      url = "github:edolstra/flake-compat";
-      flake = false;
-    };
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    flake-parts.url = "github:hercules-ci/flake-parts";
+    devenv.url = "github:cachix/devenv";
   };
 
-  outputs = { self, nixpkgs, flake-utils, ... }:
-    flake-utils.lib.eachDefaultSystem (system:
-      let pkgs = import nixpkgs { inherit system; };
-      in {
-        devShell = pkgs.mkShell { buildInputs = with pkgs; [ git nodejs yarn ]; };
-      });
+  outputs = inputs@{ flake-parts, ... }:
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      imports = [
+        inputs.devenv.flakeModule
+      ];
+
+      systems = [ "x86_64-linux" "x86_64-darwin" "aarch64-darwin" ];
+
+      perSystem = { config, self', inputs', pkgs, system, ... }: rec {
+        devenv.shells = {
+          default = {
+            languages = { };
+
+            pre-commit.hooks = {
+              nixpkgs-fmt.enable = true;
+              yamllint.enable = true;
+            };
+
+            packages = with pkgs; [
+              nodejs
+              yarn
+            ];
+
+            # https://github.com/cachix/devenv/issues/528#issuecomment-1556108767
+            containers = pkgs.lib.mkForce { };
+          };
+
+          ci = devenv.shells.default;
+        };
+      };
+    };
 }
