@@ -42,11 +42,12 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       navbar: {
-        title: 'TwirPHP',
-        /*logo: {
-          alt: 'TwirPHP Logo',
+        // title: 'TwirPHP',
+        logo: {
+          alt: 'TwirPHP',
           src: 'img/logo.svg',
-        },*/
+          srcDark: 'img/logo-dark.svg',
+        },
         items: [
           {
             type: 'doc',
