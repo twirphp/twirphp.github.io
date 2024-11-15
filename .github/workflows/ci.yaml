@@ -3,7 +3,6 @@ name: CI
 on:
   pull_request:
 
-
 permissions:
   contents: read
 
@@ -29,7 +28,7 @@ jobs:
         run: nix develop --impure .#ci
 
       - name: Download dependencies
-        run: nix develop --impure .#ci -c yarn install --frozen-lockfile
+        run: nix develop --impure .#ci -c npm install
 
       - name: Build
-        run: nix develop --impure .#ci -c yarn build
+        run: nix develop --impure .#ci -c npm run build

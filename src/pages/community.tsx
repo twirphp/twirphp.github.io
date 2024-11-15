@@ -1,14 +1,12 @@
-import React from 'react';
 import clsx from 'clsx';
-import styles from './community.module.css';
-import Layout from '@theme/Layout';
 import Link from '@docusaurus/Link';
-
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+import Layout from '@theme/Layout';
+import Heading from '@theme/Heading';
 
-function Community() {
-  const context = useDocusaurusContext();
+import styles from './community.module.css';
 
+export default function Community(): JSX.Element {
   return (
     <Layout title="Community" description="Places to ask questions">
       <header className="hero hero--primary">
@@ -86,5 +84,3 @@ function Community() {
     </Layout>
   );
 }
-
-export default Community;
