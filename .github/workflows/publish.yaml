@@ -31,7 +31,7 @@ jobs:
 
       - name: Set up Pages
         id: pages
-        uses: actions/configure-pages@f156874f8191504dae5b037505266ed5dda6c382 # v3.0.6
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
 
       - name: Download dependencies
         run: nix develop --impure .#ci -c npm install
