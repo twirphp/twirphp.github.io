@@ -1,5 +1,4 @@
 {
-  description = "TwirPHP website";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
